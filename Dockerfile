@@ -1,8 +1,22 @@
 FROM ubuntu:bionic
-# You can change the FROM Instruction to your existing images if you like and build it with same tag
+
+ARG UID=1000
+ARG GID=1000
+ARG UNAME
 ENV container docker
-ENV LC_ALL C
+ENV LC_ALL C.UTF-8
+ENV LANG C.UTF-8
+ENV LANGUAGE C.UTF-8
 ENV DEBIAN_FRONTEND noninteractive
+USER root
+
+#add your user with same UID GID
+RUN groupadd -g $GID $UNAME
+RUN useradd -m -u $UID -g $GID -s /bin/bash $UNAME
+RUN echo "kph:changeme" | chpasswd
+#allow i386 packages
+RUN dpkg --add-architecture i386
+
 RUN echo 'APT::Install-Recommends "0"; \n\
 APT::Get::Assume-Yes "true"; \n\
 APT::Get::force-yes "true"; \n\
@@ -23,10 +37,15 @@ rm -f /lib/systemd/system/basic.target.wants/*;\
 rm -f /lib/systemd/system/anaconda.target.wants/*; \
 rm -f /lib/systemd/system/plymouth*; \
 rm -f /lib/systemd/system/systemd-update-utmp*;
+
 RUN systemctl set-default multi-user.target
 
 RUN apt-get install openssh-server
 ENV init /lib/systemd/systemd
 VOLUME [ "/sys/fs/cgroup" ]
 # docker run -it --privileged=true -v /sys/fs/cgroup:/sys/fs/cgroup:ro 444c127c995b /lib/systemd/systemd systemd.unit=emergency.service
+
+
+
+
 ENTRYPOINT ["/lib/systemd/systemd"]

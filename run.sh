@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 pushd $DIR
 
@@ -9,7 +10,7 @@ GROUP_ID="$(id -g)"
 # ARG1: Docker image name
 # ARG2: Dockerfile
 function docker_build {
-    docker build \
+    docker build --network="host" \
         --build-arg UID="$USER_ID"\
         --build-arg GID="$GROUP_ID"\
         --build-arg UNAME="$USER"\

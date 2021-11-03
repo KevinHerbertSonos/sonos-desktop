@@ -9,7 +9,7 @@ GROUP_ID="$(id -g)"
 # ARG1: Docker image name
 # ARG2: Dockerfile
 function docker_build {
-    docker build --network="host" \
+    docker build \
         --build-arg UID="$USER_ID"\
         --build-arg GID="$GROUP_ID"\
         --build-arg UNAME="$USER"\
@@ -39,11 +39,14 @@ if [ ! -v DOCKER_CPUS_OVERRIDE ]; then
     DOCKER_CPUS_OVERRIDE=0
 fi
 
-docker run --network="host" \
+docker run -it \
     --cpus=$DOCKER_CPUS_OVERRIDE \
-    --user "$USER_ID":"$GROUP_ID" \
+    --cap-add SYS_ADMIN \
     -v /home/"$USER":/home/"$USER" \
     -v /srctrees:/srctrees:delegated \
-    -it $DEVIMAGE /bin/bash $BASHRC_OVERRIDE
+    -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+    -p 2222:22 \
+    --tmpfs /tmp --tmpfs /run --tmpfs /run/lock \
+    $DEVIMAGE
 
 popd

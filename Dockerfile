@@ -15,43 +15,42 @@ ENV LANGUAGE C.UTF-8
 USER root
 
 #add your user with same UID GID
-RUN groupadd -g $GID $UNAME
-RUN useradd -m -u $UID -g $GID -s /bin/bash $UNAME
-RUN echo "kph:changeme" | chpasswd
-#allow i386 packages
-RUN dpkg --add-architecture i386
+#and add 32 bit intel packages
+#and install base packages
 
-#base packages
-RUN apt-get update && apt-get install -y \
+RUN groupadd -g $GID $UNAME && \
+    useradd -m -u $UID -g $GID -s /bin/bash $UNAME && \
+    echo "kph:changeme" | chpasswd && \
+    dpkg --add-architecture i386 && \
+    apt-get update && apt-get install -y \
         apt-utils \
         gnupg \
         locales locales-all \
         software-properties-common \
         wget
 
-RUN apt-get install -y host && host packages.sonos.com
-
-RUN wget -qO - https://packages.sonos.com/ubuntu/keys/8E2CB5FF.gpg | apt-key add -
-RUN wget -qO - https://apt.llvm.org/llvm-snapshot.gpg.key| apt-key add -
-RUN add-apt-repository 'deb http://packages.sonos.com/ubuntu bionic main'
-RUN add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main'
-RUN apt-get update
-
-RUN apt-get install -y \
+RUN wget -qO - https://packages.sonos.com/ubuntu/keys/8E2CB5FF.gpg | apt-key add - && \
+    wget -qO - https://apt.llvm.org/llvm-snapshot.gpg.key| apt-key add - && \
+    add-apt-repository 'deb http://packages.sonos.com/ubuntu bionic main' && \
+    add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main' && \
+    apt-get update && apt-get install -y \
     bear \
     clang-format-10 \
+    emacs \
+    host \
     liblz4-tool \
     libtinfo-dev \
     openssh-server \
     python-rbtools \
     quilt \
     rsync \
-    sonos-dev \
+    sonos-desktop \
     sudo \
     systemd \
     xxd
 
-RUN systemctl set-default multi-user.target
+RUN systemctl set-default multi-user.target && \
+    adduser $UNAME sudo
 
 VOLUME [ "/sys/fs/cgroup" ]
 

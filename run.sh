@@ -42,12 +42,14 @@ fi
 
 docker run -it \
     --cpus=$DOCKER_CPUS_OVERRIDE \
+    --privileged \
     --cap-add SYS_ADMIN \
+    --security-opt seccomp=unconfined \
+    --cgroup-parent=docker.slice --cgroupns private \
+    --tmpfs /tmp --tmpfs /run --tmpfs /run/lock \
     -v /home/"$USER":/home/"$USER" \
     -v /srctrees:/srctrees:delegated \
-    -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
     -p 2222:22 \
-    --tmpfs /tmp --tmpfs /run --tmpfs /run/lock \
     $DEVIMAGE
 
 popd

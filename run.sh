@@ -48,7 +48,8 @@ docker run -it \
     --cgroup-parent=docker.slice --cgroupns private \
     --tmpfs /tmp --tmpfs /run --tmpfs /run/lock \
     -v /home/"$USER":/home/"$USER" \
-    -v /srctrees:/srctrees:delegated \
+    -v /development:/development:delegated \
+    -v /Volumes/KevinPortable/:/KevinPortable:delegated \
     -p 2222:22 \
     $DEVIMAGE
 

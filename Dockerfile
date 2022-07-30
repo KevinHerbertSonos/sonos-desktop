@@ -29,17 +29,18 @@ RUN groupadd -g $GID $UNAME && \
         gnupg \
         locales locales-all \
         software-properties-common \
-        wget
-
-RUN wget --no-check-certificate -nv -O - -o /dev/null https://packages.sonos.com/ubuntu/keys/8E2CB5FF.gpg | apt-key add - && \
+        wget && \
+    wget --no-check-certificate -nv -O - -o /dev/null https://packages.sonos.com/ubuntu/keys/8E2CB5FF.gpg | apt-key add - && \
     wget -nv -O - -o /dev/null https://apt.llvm.org/llvm-snapshot.gpg.key| apt-key add - && \
     add-apt-repository 'deb http://packages.sonos.com/ubuntu bionic main' && \
-    add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main' && \
-    apt-get update && apt-get install -y \
+    add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main'
+
+RUN apt-get update && apt-get install -y \
     aptitude \
     bear \
     clang-format-10 \
     emacs \
+    gtk+3.0 \
     host \
     iputils-ping \
     liblz4-tool \
@@ -53,9 +54,11 @@ RUN wget --no-check-certificate -nv -O - -o /dev/null https://packages.sonos.com
     sonos-desktop \
     sudo \
     systemd \
+    tk \
     xxd
 
-RUN systemctl set-default multi-user.target && \
+RUN sed -i "s/^.*X11UseLocalhost.*$/X11UseLocalhost no/" /etc/ssh/sshd_config && \
+    systemctl set-default multi-user.target && \
     adduser $UNAME sudo
 
 ENTRYPOINT ["/lib/systemd/systemd"]

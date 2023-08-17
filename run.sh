@@ -6,11 +6,12 @@ pushd $DIR
 DOCKER_LOCAL=Dockerfile.local
 USER_ID="$(id -u)"
 GROUP_ID="$(id -g)"
+CONTAINER="container:sonos-vpn"
 
 # ARG1: Docker image name
 # ARG2: Dockerfile
 function docker_build {
-    docker build --network="host" \
+    docker build --network="$CONTAINER" \
         --build-arg UID="$USER_ID"\
         --build-arg GID="$GROUP_ID"\
         --build-arg UNAME="$USER"\
@@ -43,14 +44,13 @@ fi
 docker run -it \
     --cpus=$DOCKER_CPUS_OVERRIDE \
     --privileged \
-    --cap-add SYS_ADMIN \
     --security-opt seccomp=unconfined \
     --cgroup-parent=docker.slice --cgroupns private \
     --tmpfs /tmp --tmpfs /run --tmpfs /run/lock \
     -v /home/"$USER":/home/"$USER" \
     -v /development:/development:delegated \
     -v /Volumes/KevinPortable/:/KevinPortable:delegated \
-    -p 2222:22 \
+    --network="$CONTAINER" \
     $DEVIMAGE
 
 popd

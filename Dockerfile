@@ -15,21 +15,13 @@ ENV LANG C.UTF-8
 ENV LANGUAGE C.UTF-8
 USER root
 
-EXPOSE 51222/udp
-
-#add your user with same UID GID
 #and add 32 bit intel packages
 #and install base packages
-
-RUN groupadd -g $GID $UNAME && \
-    useradd -m -u $UID -g $GID -s /bin/bash $UNAME && \
-    echo "kph:changeme" | chpasswd && \
-    dpkg --add-architecture i386 && \
+RUN    dpkg --add-architecture i386 && \
     yes | /usr/local/sbin/unminimize
 
+# Install the packages from Ubuntu
 RUN apt-get update && apt-get install -y \
-        apache2 \
-	apache2-utils \
         aptitude \
         apt-utils \
         bear \
@@ -56,20 +48,25 @@ RUN apt-get update && apt-get install -y \
         wget && \
         xxd
 
-RUN sed -i "s/^.*X11UseLocalhost.*$/X11UseLocalhost no/" /etc/ssh/sshd_config && \
-    a2enmod userdir && \
-    systemctl set-default multi-user.target && \
-    adduser $UNAME sudo
-
-RUN wget --no-check-certificate -nv -O - -o /proc/self/fd/2 https://packages.sonos.com/ubuntu/keys/8E2CB5FF.gpg | apt-key add - && \
-    wget -nv -O - -o /dev/null https://apt.llvm.org/llvm-snapshot.gpg.key| apt-key add - && \
+# Set up Sonos packages
+RUN wget --no-check-certificate -nv -O - -o /proc/self/fd/2 https://packages.sonos.com/ubuntu/keys/8E2CB5FF.gpg | \
+        apt-key add - && \
+    wget -nv -O - -o /proc/self/fd/2 https://apt.llvm.org/llvm-snapshot.gpg.key| \
+        apt-key add - && \
     add-apt-repository 'deb http://packages.sonos.com/ubuntu bionic main' && \
-    add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main'
+    add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main' && \
+    apt-get update && \
+        apt-get install -y \
+            clang-format-10 \
+            sonos-desktop
 
-RUN apt-get update && apt-get install -y \
-    clang-format-10 \
-    sonos-desktop
-
-RUN sed -i "s/^.*Port 22*$/Port 2222/" /etc/ssh/sshd_config
+# Configure our user login access
+RUN sed -i -e "s/^.*X11UseLocalhost.*$/X11UseLocalhost no/" \
+           -e "s/^.*Port 22*$/Port 2222/" /etc/ssh/sshd_config && \
+    systemctl set-default multi-user.target && \
+    groupadd -g $GID $UNAME && \
+    useradd -m -u $UID -g $GID -s /bin/bash $UNAME && \
+    echo "kph:changeme" | chpasswd && \
+    adduser $UNAME sudo
 
 ENTRYPOINT ["/lib/systemd/systemd"]

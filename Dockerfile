@@ -3,8 +3,6 @@ FROM ubuntu:bionic
 ARG UID=1000
 ARG GID=1000
 ARG UNAME
-# in case DNS isn't working via VPN packages.sonos.com = packages.sonos.com
-# ARG REPO=packages.sonos.com
 
 ENV APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn
 ENV container docker
@@ -30,6 +28,7 @@ RUN apt-get update && apt-get install -y \
         gtk+3.0 \
         host \
         iputils-ping \
+        libpam-ssh-agent-auth \
         liblz4-tool \
         libtinfo-dev \
         locales locales-all \
@@ -45,7 +44,7 @@ RUN apt-get update && apt-get install -y \
         sudo \
         systemd \
         tk \
-        wget && \
+        wget \
         xxd
 
 # Set up Sonos packages
@@ -55,18 +54,21 @@ RUN wget --no-check-certificate -nv -O - -o /proc/self/fd/2 https://packages.son
         apt-key add - && \
     add-apt-repository 'deb http://packages.sonos.com/ubuntu bionic main' && \
     add-apt-repository 'deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-10 main' && \
-    apt-get update && \
-        apt-get install -y \
-            clang-format-10 \
-            sonos-desktop
+    apt-get update
 
-# Configure our user login access
+RUN apt-get install -y \
+        clang-format-10 \
+        sonos-desktop
+
+# Set up sudo via ssh agent
+COPY pam-sudo /etc/pam.d/sudo
+
 RUN sed -i -e "s/^.*X11UseLocalhost.*$/X11UseLocalhost no/" \
            -e "s/^.*Port 22*$/Port 2222/" /etc/ssh/sshd_config && \
+    echo "Defaults env_keep += SSH_AUTH_SOCK" >> /etc/sudoers && \
     systemctl set-default multi-user.target && \
     groupadd -g $GID $UNAME && \
     useradd -m -u $UID -g $GID -s /bin/bash $UNAME && \
-    echo "kph:changeme" | chpasswd && \
     adduser $UNAME sudo
 
 ENTRYPOINT ["/lib/systemd/systemd"]
